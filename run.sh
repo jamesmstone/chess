@@ -65,7 +65,14 @@ publishDB() {
     publish vercel \
     "$db" \
     "--project=$app" \
+    --generate-vercel-json > vercel.json
+  sed -i 's/@vercel\/python@3\.0\.7/@vercel\/python@4.5.1/g' vercel.json
+  datasette \
+    publish vercel \
+    "$db" \
     --token $VERCEL_TOKEN \
+    "--project=$app" \
+    --vercel-json=vercel.json \
     --setting sql_time_limit_ms 3500 \
     --install=datasette-vega \
     --install=datasette-cluster-map
