@@ -1,8 +1,10 @@
 name: Scrape latest data
 
+# No schedule: lichess's games-by-user endpoint has returned 404 for every
+# player since mid-2026 (lichess-org/api#667, closed unfixed), so a four-hourly
+# run would only ever fail -- on a runner with capacity 1, in front of
+# everything else queued behind it.
 on:
-  schedule:
-    - cron: "1 0/4 * * *"
   workflow_dispatch:
 
 env:
