@@ -1,0 +1,35 @@
+name: Scrape latest data
+
+# No schedule: lichess's games-by-user endpoint has returned 404 for every
+# player since mid-2026 (lichess-org/api#667, closed unfixed), so a four-hourly
+# run would only ever fail -- on a runner with capacity 1, in front of
+# everything else queued behind it.
+on:
+  workflow_dispatch:
+
+env:
+  NIX_CONFIG: "accept-flake-config = true"
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: native
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Build database
+        run: nix develop -c ./run.sh build
+
+      - name: Publish database
+        # Rename rather than write in place: Datasette holds the database
+        # open, and install(1) truncates, so a reader can see a torn file
+        # mid-write. The rename is atomic and still trips the path unit.
+        run: |-
+          install -Dm644 chess.db /var/lib/datasette-sites/chess/.chess.db.new
+          mv -f /var/lib/datasette-sites/chess/.chess.db.new /var/lib/datasette-sites/chess/chess.db
+
+      - name: Commit database
+        run: ./run.sh commit-db
