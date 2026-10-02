@@ -1,0 +1,28 @@
+name: Scrape latest data
+
+on:
+  schedule:
+    - cron: "1 0/4 * * *"
+  workflow_dispatch:
+
+env:
+  NIX_CONFIG: "accept-flake-config = true"
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: native
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Build database
+        run: nix develop -c ./run.sh build
+
+      - name: Publish database
+        run: install -Dm644 chess.db /var/lib/datasette-sites/chess/chess.db
+
+      - name: Commit database
+        run: ./run.sh commit-db
