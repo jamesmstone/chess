@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+# Without this nix warns about flake.nix's nixConfig and ignores the
+# substituters it names.
+env:
+  NIX_CONFIG: "accept-flake-config = true"
+
+jobs:
+  flake-check:
+    runs-on: native
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Run Nix flake check
+        run: nix flake check -L
