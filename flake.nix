@@ -40,8 +40,6 @@
           pgn-to-sqlite = inputs.self.packages.${system}.pgn-to-sqlite;
         }
         // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-          # The real unit with the lichess CLI stubbed: the database must land
-          # at `publish`, and an empty scrape must leave the previous one alone.
           scraper = pkgs.testers.runNixOSTest {
             name = "chess-scraper";
 
@@ -55,7 +53,6 @@
                   user = "root";
                   lichessUser = "someone";
                   publish = "/srv/site/chess.db";
-                  # args: -u <user> -o <db> fetch lichess
                   tool = pkgs.writeShellScriptBin "pgn-to-sqlite" ''
                     sqlite3 "$4" 'create table games(opening text)'
                     [ -e /srv/empty ] || sqlite3 "$4" "insert into games values ('Catalan by '||'$2')"

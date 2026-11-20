@@ -16,7 +16,6 @@ let
     trap 'rm -rf "$tmp"' EXIT
     # pgn-to-sqlite only INSERTs, so it needs a fresh file or games duplicate.
     ${lib.getExe cfg.tool} -u ${q cfg.lichessUser} -o "$tmp/chess.db" fetch lichess
-    # An empty scrape must not replace the last good database.
     [ "$(sqlite3 "$tmp/chess.db" 'select count(*) from games')" -gt 0 ]
     # Renamed into place: readers may hold the old file open, and writing in
     # place would show them a torn one.
