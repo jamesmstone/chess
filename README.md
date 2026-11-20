@@ -10,9 +10,10 @@ nix develop        # pgn-to-sqlite, git, sqlite-utils
 ./run.sh commit-db # force-push chess.db to the `db` branch
 ```
 
-`chess.db` is not committed to `main`; the built database lives on the orphan
-[`db`](../../src/branch/db) branch, and the scrape also hands it to the timeline on hermanii with the runner's
-`publish-db` command (destination: `services.dbs` in config-nix-channel).
+`chess.db` is not committed. `nixosModules.scraper` runs the scrape on a timer
+and installs the database at its `publish` path (set from `services.dbs` in
+config-nix-channel), where the timeline reads it. `./run.sh commit-db` still
+force-pushes a built database to the orphan [`db`](../../src/branch/db) branch.
 
 ## The lichess export endpoint is currently 404
 
