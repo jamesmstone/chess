@@ -11,9 +11,8 @@ nix develop        # pgn-to-sqlite, git, sqlite-utils
 ```
 
 `chess.db` is not committed to `main`; the built database lives on the orphan
-[`db`](../../src/branch/db) branch, and the scrape also installs it to
-`/var/lib/datasette-sites/chess/chess.db` on hermanii, where Datasette serves
-it.
+[`db`](../../src/branch/db) branch, and the scrape also hands it to the timeline on hermanii with the runner's
+`publish-db` command (destination: `services.dbs` in config-nix-channel).
 
 ## The lichess export endpoint is currently 404
 
