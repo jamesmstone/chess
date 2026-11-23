@@ -29,9 +29,51 @@
         default = pgn-to-sqlite;
       });
 
-      checks = eachSystem (system: {
-        pgn-to-sqlite = inputs.self.packages.${system}.pgn-to-sqlite;
-      });
+      nixosModules.scraper = import ./nix/scraper-module.nix { inherit (inputs) self; };
+
+      checks = eachSystem (
+        system:
+        let
+          pkgs = pkgsFor.${system};
+        in
+        {
+          pgn-to-sqlite = inputs.self.packages.${system}.pgn-to-sqlite;
+        }
+        // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+          scraper = pkgs.testers.runNixOSTest {
+            name = "chess-scraper";
+
+            nodes.machine =
+              { pkgs, ... }:
+              {
+                imports = [ inputs.self.nixosModules.scraper ];
+                environment.systemPackages = [ pkgs.sqlite ];
+                services.chess-scraper = {
+                  enable = true;
+                  user = "root";
+                  lichessUser = "someone";
+                  publish = "/srv/site/chess.db";
+                  tool = pkgs.writeShellScriptBin "pgn-to-sqlite" ''
+                    sqlite3 "$4" 'create table games(opening text)'
+                    [ -e /srv/empty ] || sqlite3 "$4" "insert into games values ('Catalan by '||'$2')"
+                  '';
+                };
+                systemd.tmpfiles.rules = [ "d /srv/site 0755 root root -" ];
+                systemd.timers.chess-scraper.wantedBy = pkgs.lib.mkForce [ ];
+              };
+
+            testScript = ''
+              machine.wait_for_unit("multi-user.target")
+              machine.succeed("systemctl start chess-scraper.service")
+              assert machine.succeed("sqlite3 /srv/site/chess.db 'select opening from games'").strip() == "Catalan by someone"
+
+              machine.succeed("touch /srv/empty")
+              machine.fail("systemctl start chess-scraper.service")
+              assert machine.succeed("sqlite3 /srv/site/chess.db 'select count(*) from games'").strip() == "1"
+            '';
+          };
+        }
+      );
 
       devShells = eachSystem (system: {
         default = pkgsFor.${system}.mkShell {
